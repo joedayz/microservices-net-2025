@@ -55,7 +55,32 @@ Crear un microservicio mínimo en .NET con:
 
 ### Paso 1: Crear el proyecto
 
+**Linux/macOS (Bash/Zsh):**
 ```bash
+# Navegar a la carpeta de servicios
+cd src/Services
+
+# Crear nuevo proyecto Web API
+dotnet new webapi -n ProductService --no-https --use-controllers
+
+# Navegar al proyecto
+cd ProductService
+```
+
+**Windows (CMD):**
+```cmd
+REM Navegar a la carpeta de servicios
+cd src\Services
+
+REM Crear nuevo proyecto Web API
+dotnet new webapi -n ProductService --no-https --use-controllers
+
+REM Navegar al proyecto
+cd ProductService
+```
+
+**Windows (PowerShell):**
+```powershell
 # Navegar a la carpeta de servicios
 cd src/Services
 
@@ -68,7 +93,24 @@ cd ProductService
 
 ### Paso 2: Crear la estructura de carpetas
 
+**Linux/macOS (Bash/Zsh):**
 ```bash
+# Crear carpetas para arquitectura limpia
+mkdir Domain
+mkdir Infrastructure
+mkdir Application
+```
+
+**Windows (CMD):**
+```cmd
+REM Crear carpetas para arquitectura limpia
+mkdir Domain
+mkdir Infrastructure
+mkdir Application
+```
+
+**Windows (PowerShell):**
+```powershell
 # Crear carpetas para arquitectura limpia
 mkdir Domain
 mkdir Infrastructure
@@ -196,6 +238,26 @@ public class ProductsController : ControllerBase
 
         return Ok(product);
     }
+
+    [HttpPost]
+    public async Task<ActionResult<Product>> Create([FromBody] CreateProductRequest request, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Creating product: {ProductName}", request.Name);
+        
+        var product = new Product(request.Name, request.Description, request.Price, request.Stock);
+        var createdProduct = await _repository.CreateAsync(product, cancellationToken);
+        
+        return CreatedAtAction(nameof(GetById), new { id = createdProduct.Id }, createdProduct);
+    }
+}
+
+// DTO para crear productos (agregar al final del archivo)
+public class CreateProductRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public int Stock { get; set; }
 }
 ```
 
@@ -213,7 +275,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 // Registrar repositorio
-builder.Services.AddScoped<IProductRepository, InMemoryProductRepository>();
+builder.Services.AddSingleton<IProductRepository, InMemoryProductRepository>();
 
 var app = builder.Build();
 
@@ -252,6 +314,7 @@ static async Task SeedDataAsync(IProductRepository repository)
 
 ### Paso 8: Ejecutar el servicio
 
+**Linux/macOS (Bash/Zsh):**
 ```bash
 # Restaurar paquetes
 dotnet restore
@@ -260,13 +323,33 @@ dotnet restore
 dotnet run
 ```
 
-El servicio estará disponible en: `http://localhost:5000`
+**Windows (CMD):**
+```cmd
+REM Restaurar paquetes
+dotnet restore
+
+REM Ejecutar el servicio
+dotnet run
+```
+
+**Windows (PowerShell):**
+```powershell
+# Restaurar paquetes
+dotnet restore
+
+# Ejecutar el servicio
+dotnet run
+```
+
+El servicio estará disponible en: `http://localhost:5001` (verifica el puerto en los logs o en `Properties/launchSettings.json`)
 
 ### Paso 9: Probar los endpoints
 
 **⚠️ Importante:** Verifica el puerto en `Properties/launchSettings.json`. Por defecto es `5001`.
 
 **Opción 1: Usando curl**
+
+**Linux/macOS (Bash/Zsh):**
 ```bash
 # Obtener todos los productos
 curl http://localhost:5001/api/products
@@ -276,6 +359,62 @@ curl http://localhost:5001/api/products/{id}
 
 # Con formato JSON (si tienes jq instalado)
 curl http://localhost:5001/api/products | jq
+
+# Crear un nuevo producto (POST)
+curl -X POST http://localhost:5001/api/products \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Tablet","description":"Android tablet","price":299.99,"stock":20}'
+
+# Crear producto con formato JSON (si tienes jq instalado)
+curl -X POST http://localhost:5001/api/products \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Monitor","description":"4K Monitor","price":499.99,"stock":15}' | jq
+```
+
+**Windows (CMD):**
+```cmd
+REM Obtener todos los productos
+curl http://localhost:5001/api/products
+
+REM Obtener producto por ID (reemplazar {id} con un ID real)
+curl http://localhost:5001/api/products/{id}
+
+REM Crear un nuevo producto (POST)
+curl -X POST http://localhost:5001/api/products -H "Content-Type: application/json" -d "{\"name\":\"Tablet\",\"description\":\"Android tablet\",\"price\":299.99,\"stock\":20}"
+
+REM Crear otro producto
+curl -X POST http://localhost:5001/api/products -H "Content-Type: application/json" -d "{\"name\":\"Monitor\",\"description\":\"4K Monitor\",\"price\":499.99,\"stock\":15}"
+```
+
+**Windows (PowerShell):**
+```powershell
+# Obtener todos los productos
+Invoke-RestMethod -Uri http://localhost:5001/api/products -Method Get
+
+# O con curl (si está disponible en PowerShell 7+)
+curl http://localhost:5001/api/products
+
+# Obtener producto por ID (reemplazar {id} con un ID real)
+Invoke-RestMethod -Uri http://localhost:5001/api/products/{id} -Method Get
+
+# Crear un nuevo producto (POST) - Método 1: Invoke-RestMethod
+$body = @{
+    name = "Tablet"
+    description = "Android tablet"
+    price = 299.99
+    stock = 20
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri http://localhost:5001/api/products -Method Post -Body $body -ContentType "application/json"
+
+# Crear producto - Método 2: Invoke-WebRequest
+$jsonBody = '{"name":"Monitor","description":"4K Monitor","price":499.99,"stock":15}'
+Invoke-WebRequest -Uri http://localhost:5001/api/products -Method Post -Body $jsonBody -ContentType "application/json"
+
+# Crear producto - Método 3: curl (PowerShell 7+)
+curl -X POST http://localhost:5001/api/products `
+  -H "Content-Type: application/json" `
+  -d '{"name":"Keyboard","description":"Mechanical keyboard","price":89.99,"stock":30}'
 ```
 
 **Nota:** Después del Módulo 3 (Versionamiento), también estarán disponibles las rutas versionadas:
@@ -288,6 +427,16 @@ curl http://localhost:5001/api/products | jq
 **Opción 3: Usando Postman o Thunder Client**
 - GET `http://localhost:5001/api/products`
 - GET `http://localhost:5001/api/products/{id}`
+- POST `http://localhost:5001/api/products`
+  - Body (JSON):
+    ```json
+    {
+      "name": "Tablet",
+      "description": "Android tablet",
+      "price": 299.99,
+      "stock": 20
+    }
+    ```
 
 **Nota:** Si el servicio está en otro puerto, verifica los logs al ejecutar `dotnet run` o revisa `Properties/launchSettings.json`.
 
@@ -304,11 +453,12 @@ Observa los logs en la consola para ver:
 - [ ] Entidad Product creada
 - [ ] Interfaz IProductRepository creada
 - [ ] Repositorio en memoria implementado
-- [ ] Controlador con endpoints GET creado
-- [ ] Program.cs configurado con DI
+- [ ] Controlador con endpoints GET y POST creado
+- [ ] Program.cs configurado con DI (AddSingleton)
 - [ ] Servicio ejecuta sin errores
 - [ ] Endpoint GET /api/products retorna productos
 - [ ] Endpoint GET /api/products/{id} retorna producto específico
+- [ ] Endpoint POST /api/products crea nuevos productos
 - [ ] Logs aparecen en consola
 
 ### 📝 Conceptos aprendidos
@@ -327,14 +477,19 @@ Observa los logs en la consola para ver:
 - Verificar que los namespaces coincidan
 
 **Error: "Service not registered"**
-- Verificar que `AddScoped<IProductRepository, InMemoryProductRepository>()` esté en Program.cs
+- Verificar que `AddSingleton<IProductRepository, InMemoryProductRepository>()` esté en Program.cs
+- Nota: Usamos `AddSingleton` en lugar de `AddScoped` para que los datos persistan en el repositorio en memoria
 
 **No aparecen productos**
-- Verificar que SeedDataAsync se ejecute correctamente
+- Verificar que SeedDataAsync se ejecute correctamente (deberías ver logs al iniciar el servicio)
+- Verificar que el repositorio esté registrado como `Singleton` (no `Scoped`) para que los datos persistan
 - Agregar breakpoint o logs para debuggear
+- Reiniciar el servicio y verificar los logs de seed
 
 **"Connection refused" o "No devuelve nada"**
 - Verificar el puerto correcto en `Properties/launchSettings.json` (por defecto es 5001, no 5000)
 - Verificar que el servicio esté corriendo: `dotnet run`
 - Usar la URL correcta: `http://localhost:5001/api/products` (ajusta el puerto según tu configuración)
+- En Windows PowerShell, usar `Invoke-RestMethod` en lugar de `curl` si curl no funciona
+- Verificar que no haya firewall bloqueando el puerto
 
