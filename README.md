@@ -55,11 +55,96 @@ microservices-net-2025/
 ### 🚀 Requisitos Previos
 
 - .NET 10 SDK
-- Docker Desktop
+- Docker Desktop (o Podman)
 - Azure CLI
 - Terraform
 - kubectl
 - istioctl
+- JetBrains Rider (recomendado) o Visual Studio Code / Visual Studio
+
+### 💻 Instalación
+
+#### .NET 10 SDK
+
+**Windows:**
+```bash
+# Descargar e instalar desde:
+# https://dotnet.microsoft.com/download/dotnet/10.0
+
+# Verificar instalación
+dotnet --version
+# Debe mostrar: 10.x.x
+```
+
+**macOS:**
+```bash
+# Usando Homebrew
+brew install --cask dotnet-sdk
+
+# Verificar instalación
+dotnet --version
+# Debe mostrar: 10.x.x
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+# Agregar repositorio de Microsoft
+wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+rm packages-microsoft-prod.deb
+
+# Instalar .NET 10 SDK
+sudo apt-get update
+sudo apt-get install -y dotnet-sdk-10.0
+
+# Verificar instalación
+dotnet --version
+# Debe mostrar: 10.x.x
+```
+
+**Descarga directa:**
+- Visita: https://dotnet.microsoft.com/download/dotnet/10.0
+- Selecciona tu sistema operativo
+- Descarga e instala el SDK (no solo el Runtime)
+
+#### JetBrains Rider
+
+**Windows/macOS/Linux:**
+```bash
+# Descargar desde:
+# https://www.jetbrains.com/rider/download/
+
+# O usar JetBrains Toolbox (recomendado):
+# https://www.jetbrains.com/toolbox-app/
+```
+
+**Alternativas:**
+- **Visual Studio Code** con extensión C#: https://code.visualstudio.com/
+- **Visual Studio 2022**: https://visualstudio.microsoft.com/
+- **Rider** (recomendado para este taller): https://www.jetbrains.com/rider/
+
+#### Docker Desktop (o Podman)
+
+**Docker Desktop:**
+- **Windows/macOS**: https://www.docker.com/products/docker-desktop
+- **Linux**: https://docs.docker.com/engine/install/
+
+**Podman (alternativa):**
+- Ver instrucciones en [`docs/PODMAN-SETUP.md`](./docs/PODMAN-SETUP.md)
+
+**Verificar instalación:**
+```bash
+docker --version
+# o
+podman --version
+```
+
+#### Otras herramientas (opcional para módulos avanzados)
+
+- **Azure CLI**: https://docs.microsoft.com/cli/azure/install-azure-cli
+- **Terraform**: https://www.terraform.io/downloads
+- **kubectl**: https://kubernetes.io/docs/tasks/tools/
+- **istioctl**: https://istio.io/latest/docs/setup/getting-started/#download
 
 ### 📖 Cómo usar este taller
 
