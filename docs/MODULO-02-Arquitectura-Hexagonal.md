@@ -84,11 +84,32 @@ Refactorizar el microservicio para implementar arquitectura hexagonal:
 
 ### Paso 1: Crear estructura de carpetas
 
+**Linux/macOS (Bash/Zsh):**
 ```bash
 # Ya deberías tener estas carpetas del Lab 1
 # Si no, créalas:
 mkdir -p Application/DTOs
 mkdir -p Application/Services
+```
+
+**Windows (CMD):**
+```cmd
+REM Ya deberías tener estas carpetas del Lab 1
+REM Si no, créalas:
+mkdir Application\DTOs
+mkdir Application\Services
+```
+
+**Windows (PowerShell):**
+```powershell
+# Ya deberías tener estas carpetas del Lab 1
+# Si no, créalas:
+New-Item -ItemType Directory -Force -Path Application/DTOs
+New-Item -ItemType Directory -Force -Path Application/Services
+
+# O usando mkdir (alias de New-Item en PowerShell)
+mkdir -Force Application/DTOs
+mkdir -Force Application/Services
 ```
 
 ### Paso 2: Crear DTOs
@@ -396,8 +417,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
-// Registrar repositorio
-builder.Services.AddScoped<IProductRepository, InMemoryProductRepository>();
+// Registrar repositorio como Singleton para que los datos persistan entre requests
+builder.Services.AddSingleton<IProductRepository, InMemoryProductRepository>();
 
 // Registrar servicio de aplicación
 builder.Services.AddScoped<IProductService, ProductService.Application.Services.ProductService>();
@@ -439,7 +460,26 @@ static async Task SeedDataAsync(IProductRepository repository)
 
 ### Paso 8: Compilar y ejecutar
 
+**Linux/macOS (Bash/Zsh):**
 ```bash
+# Compilar
+dotnet build
+
+# Ejecutar
+dotnet run
+```
+
+**Windows (CMD):**
+```cmd
+REM Compilar
+dotnet build
+
+REM Ejecutar
+dotnet run
+```
+
+**Windows (PowerShell):**
+```powershell
 # Compilar
 dotnet build
 
@@ -451,11 +491,12 @@ dotnet run
 
 **⚠️ Importante:** Verifica el puerto en `Properties/launchSettings.json`. Por defecto es `5001`.
 
+**Linux/macOS (Bash/Zsh):**
 ```bash
 # GET todos los productos
 curl http://localhost:5001/api/products | jq
 
-# GET producto por ID
+# GET producto por ID (reemplazar {id} con un ID real)
 curl http://localhost:5001/api/products/{id} | jq
 
 # POST crear producto
@@ -463,16 +504,78 @@ curl -X POST http://localhost:5001/api/products \
   -H "Content-Type: application/json" \
   -d '{"name":"Tablet","description":"Android tablet","price":299.99,"stock":20}' | jq
 
-# PUT actualizar producto
+# PUT actualizar producto (reemplazar {id} con un ID real)
 curl -X PUT http://localhost:5001/api/products/{id} \
   -H "Content-Type: application/json" \
   -d '{"name":"Tablet Pro","description":"Android tablet Pro","price":399.99,"stock":15}'
 
-# DELETE eliminar producto
+# DELETE eliminar producto (reemplazar {id} con un ID real)
 curl -X DELETE http://localhost:5001/api/products/{id}
 ```
 
-**Nota:** Ajusta el puerto según tu configuración. Si usas `jq`, los resultados se formatearán mejor.
+**Windows (CMD):**
+```cmd
+REM GET todos los productos
+curl http://localhost:5001/api/products
+
+REM GET producto por ID (reemplazar {id} con un ID real)
+curl http://localhost:5001/api/products/{id}
+
+REM POST crear producto
+curl -X POST http://localhost:5001/api/products -H "Content-Type: application/json" -d "{\"name\":\"Tablet\",\"description\":\"Android tablet\",\"price\":299.99,\"stock\":20}"
+
+REM PUT actualizar producto (reemplazar {id} con un ID real)
+curl -X PUT http://localhost:5001/api/products/{id} -H "Content-Type: application/json" -d "{\"name\":\"Tablet Pro\",\"description\":\"Android tablet Pro\",\"price\":399.99,\"stock\":15}"
+
+REM DELETE eliminar producto (reemplazar {id} con un ID real)
+curl -X DELETE http://localhost:5001/api/products/{id}
+```
+
+**Windows (PowerShell):**
+```powershell
+# GET todos los productos - Método 1: Invoke-RestMethod
+Invoke-RestMethod -Uri http://localhost:5001/api/products -Method Get
+
+# GET todos los productos - Método 2: curl (PowerShell 7+)
+curl http://localhost:5001/api/products
+
+# GET producto por ID (reemplazar {id} con un ID real)
+Invoke-RestMethod -Uri http://localhost:5001/api/products/{id} -Method Get
+
+# POST crear producto - Método 1: Invoke-RestMethod con objeto
+$body = @{
+    name = "Tablet"
+    description = "Android tablet"
+    price = 299.99
+    stock = 20
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri http://localhost:5001/api/products -Method Post -Body $body -ContentType "application/json"
+
+# POST crear producto - Método 2: Invoke-WebRequest con JSON string
+$jsonBody = '{"name":"Monitor","description":"4K Monitor","price":499.99,"stock":15}'
+Invoke-WebRequest -Uri http://localhost:5001/api/products -Method Post -Body $jsonBody -ContentType "application/json"
+
+# POST crear producto - Método 3: curl (PowerShell 7+)
+curl -X POST http://localhost:5001/api/products `
+  -H "Content-Type: application/json" `
+  -d '{"name":"Keyboard","description":"Mechanical keyboard","price":89.99,"stock":30}'
+
+# PUT actualizar producto (reemplazar {id} con un ID real)
+$updateBody = @{
+    name = "Tablet Pro"
+    description = "Android tablet Pro"
+    price = 399.99
+    stock = 15
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri http://localhost:5001/api/products/{id} -Method Put -Body $updateBody -ContentType "application/json"
+
+# DELETE eliminar producto (reemplazar {id} con un ID real)
+Invoke-RestMethod -Uri http://localhost:5001/api/products/{id} -Method Delete
+```
+
+**Nota:** Ajusta el puerto según tu configuración. Si usas `jq` en Linux/macOS, los resultados se formatearán mejor. En PowerShell, `Invoke-RestMethod` ya formatea la salida automáticamente.
 
 ### ✅ Checklist de Verificación
 
@@ -527,7 +630,8 @@ ProductService/
 ### 🐛 Solución de Problemas
 
 **Error: "IProductService not registered"**
-- Verificar que `AddScoped<IProductService, ProductService>()` esté en Program.cs
+- Verificar que `AddScoped<IProductService, ProductService.Application.Services.ProductService>()` esté en Program.cs
+- Nota: Usa el nombre completo del namespace para evitar ambigüedades
 
 **Error: "Cannot convert Product to ProductDto"**
 - Verificar que el método `MapToDto` esté implementado correctamente

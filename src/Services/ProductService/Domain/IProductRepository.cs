@@ -7,4 +7,8 @@ public interface IProductRepository
     Task<IEnumerable<Product>> GetAllAsync(CancellationToken cancellationToken = default);
 
     Task<Product> CreateAsync(Product product, CancellationToken cancellationToken = default);
+
+    Task<bool> UpdateAsync(Product product, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+
 }

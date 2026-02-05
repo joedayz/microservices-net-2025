@@ -23,4 +23,17 @@ public class InMemoryProductRepository: IProductRepository
         _products[product.Id] = product;
         return Task.FromResult(product);
     }
+    public Task<bool> UpdateAsync(Product product, CancellationToken cancellationToken = default)
+    {
+        if (!_products.ContainsKey(product.Id))
+            return Task.FromResult(false);
+
+        _products[product.Id] = product;
+        return Task.FromResult(true);
+    }
+
+    public Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(_products.Remove(id));
+    }
 }

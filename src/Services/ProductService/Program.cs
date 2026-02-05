@@ -1,3 +1,4 @@
+using ProductService.Application.Services;
 using ProductService.Domain;
 using ProductService.Infrastructure;
 
@@ -11,6 +12,9 @@ builder.Services.AddOpenApi();
 
 // Registrar repositorio como Singleton para que los datos persistan entre requests
 builder.Services.AddSingleton<IProductRepository, InMemoryProductRepository>();
+
+// Registrar servicio de aplicacion
+builder.Services.AddSingleton<IProductService, ProductService.Application.Services.ProductService>();
 
 var app = builder.Build();
 

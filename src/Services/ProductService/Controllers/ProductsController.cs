@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using ProductService.Application.DTOs;
+using ProductService.Application.Services;
 using ProductService.Domain;
 
 namespace ProductService.Controllers;
@@ -7,28 +9,28 @@ namespace ProductService.Controllers;
 [Route("api/[controller]")]
 public class ProductsController: ControllerBase
 {
-    private readonly IProductRepository _repository;
+    private readonly IProductService _productService;
     private readonly ILogger<ProductsController> _logger;
 
 
-    public ProductsController(IProductRepository repository, ILogger<ProductsController> logger)
+    public ProductsController(
+        IProductService productService,
+        ILogger<ProductsController> logger)
     {
-        _repository = repository;
+        _productService = productService;
         _logger = logger;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Product>>> GetAll(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting all products");
-        var products = await _repository.GetAllAsync(cancellationToken);
+        var products = await _productService.GetAllAsync(cancellationToken);
         return Ok(products);
     }
     [HttpGet("{id}")]
     public async Task<ActionResult<Product>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Getting product with ID: {ProductId}", id);
-        var product = await _repository.GetByIdAsync(id, cancellationToken);
+        var product = await _productService.GetByIdAsync(id, cancellationToken);
 
         if (product == null)
         {
@@ -39,22 +41,50 @@ public class ProductsController: ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Product>> Create([FromBody] CreateProductRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<Product>> Create([FromBody] CreateProductDto dto,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Creating product: {ProductName}", request.Name);
-        
-        var product = new Product(request.Name, request.Description, request.Price, request.Stock);
-        var createdProduct = await _repository.CreateAsync(product, cancellationToken);
-        
-        return CreatedAtAction(nameof(GetById), new { id = createdProduct.Id }, createdProduct);
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        var product = await _productService.CreateAsync(dto, cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
     }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(
+        Guid id,
+        [FromBody] CreateProductDto dto,
+        CancellationToken cancellationToken)
+    {
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var updated = await _productService.UpdateAsync(id, dto, cancellationToken);
+        if (!updated)
+        {
+            return NotFound($"Product with ID {id} not found");
+        }
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        var deleted = await _productService.DeleteAsync(id, cancellationToken);
+        if (!deleted)
+        {
+            return NotFound($"Product with ID {id} not found");
+        }
+
+        return NoContent();
+    }
+
 }
 
-// DTO para crear productos
-public class CreateProductRequest
-{
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public decimal Price { get; set; }
-    public int Stock { get; set; }
-}
+
