@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using ProductService;
 using ProductService.Application.Services;
@@ -10,6 +11,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// Register Entity Framework
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<ProductDbContext>(options =>
+    options.UseNpgsql(connectionString));
 
 // API Versioning
 builder.Services
@@ -36,8 +42,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
 
 // DI
-builder.Services.AddSingleton<IProductRepository, InMemoryProductRepository>();
-builder.Services.AddSingleton<IProductService, ProductService.Application.Services.ProductService>();
+builder.Services.AddScoped<IProductRepository, EfProductRepository>();
+//builder.Services.AddSingleton<IProductRepository, InMemoryProductRepository>();
+builder.Services.AddScoped<IProductService, ProductService.Application.Services.ProductService>();
 
 var app = builder.Build();
 
@@ -74,12 +81,17 @@ app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
-    var repository = scope.ServiceProvider.GetRequiredService<IProductRepository>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ProductDbContext>();
 
-    logger.LogInformation("Seeding initial data...");
-    await SeedDataAsync(repository);
-    logger.LogInformation("Seed data completed successfully");
+    // Aplicar migraciones automáticamente
+    await dbContext.Database.MigrateAsync();
+
+    // Seed initial data if database is empty
+    if (!dbContext.Products.Any())
+    {
+        var repository = scope.ServiceProvider.GetRequiredService<IProductRepository>();
+        await SeedDataAsync(repository);
+    }
 }
 
 app.Run();

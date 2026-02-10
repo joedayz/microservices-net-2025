@@ -261,38 +261,84 @@ public class EfProductRepository : IProductRepository
 
 ### Paso 9: Actualizar Program.cs
 
+El cambio principal es reemplazar `InMemoryProductRepository` por `EfProductRepository` y agregar el `DbContext`. Se mantiene la configuración de API Versioning y Swagger del Módulo 3.
+
 **Archivo: `Program.cs`** (actualizar)
 
 ```csharp
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
+using ProductService;
 using ProductService.Application.Services;
 using ProductService.Domain;
 using ProductService.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
 
-// Register Entity Framework
+// API Versioning (del Módulo 3)
+builder.Services
+    .AddApiVersioning(options =>
+    {
+        options.DefaultApiVersion = new ApiVersion(1, 0);
+        options.AssumeDefaultVersionWhenUnspecified = true;
+        options.ReportApiVersions = true;
+        options.ApiVersionReader = ApiVersionReader.Combine(
+            new UrlSegmentApiVersionReader(),
+            new HeaderApiVersionReader("X-Version"),
+            new QueryStringApiVersionReader("version")
+        );
+    })
+    .AddApiExplorer(options =>
+    {
+        options.GroupNameFormat = "'v'VVV";
+        options.SubstituteApiVersionInUrl = true;
+    });
+
+// Swagger / OpenAPI (del Módulo 3)
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
+
+// Entity Framework Core + PostgreSQL (NUEVO en Módulo 4)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ProductDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// Register domain services - Cambiar a EF Core
+// DI - Cambiar InMemoryProductRepository por EfProductRepository
 builder.Services.AddScoped<IProductRepository, EfProductRepository>();
-// builder.Services.AddScoped<IProductRepository, InMemoryProductRepository>();
+// builder.Services.AddSingleton<IProductRepository, InMemoryProductRepository>(); // Ya no se usa
 
-// Register application services
+// Register application services (Scoped porque depende del DbContext que es Scoped)
 builder.Services.AddScoped<IProductService, ProductService.Application.Services.ProductService>();
 
 var app = builder.Build();
 
+// HTTP pipeline
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+
+        foreach (var description in provider.ApiVersionDescriptions)
+        {
+            options.SwaggerEndpoint(
+                $"/swagger/{description.GroupName}/swagger.json",
+                description.GroupName.ToUpperInvariant()
+            );
+        }
+
+        options.RoutePrefix = string.Empty; // Swagger en /
+    });
 }
 
+app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 
@@ -300,15 +346,18 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ProductDbContext>();
-    
+
     // Aplicar migraciones automáticamente
     await dbContext.Database.MigrateAsync();
-    
+
     // Seed initial data if database is empty
     if (!dbContext.Products.Any())
     {
         var repository = scope.ServiceProvider.GetRequiredService<IProductRepository>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation("Seeding initial data...");
         await SeedDataAsync(repository);
+        logger.LogInformation("Seed data completed successfully");
     }
 }
 
@@ -326,9 +375,12 @@ static async Task SeedDataAsync(IProductRepository repository)
     foreach (var product in products)
     {
         await repository.CreateAsync(product);
+        Console.WriteLine($"Seeded product: {product.Name} (ID: {product.Id})");
     }
 }
 ```
+
+**⚠️ Nota importante:** El repositorio ahora es `AddScoped` (no `AddSingleton`) porque `ProductDbContext` es Scoped por defecto en EF Core. También el `IProductService` pasa a `AddScoped` por la misma razón.
 
 ### Paso 10: Compilar y Ejecutar
 
@@ -359,19 +411,76 @@ SELECT * FROM "Products";
 ### Paso 12: Probar Endpoints
 
 **⚠️ Importante:** Verifica el puerto en `Properties/launchSettings.json`. Por defecto es `5001`.
+Las rutas usan versionamiento del Módulo 3: `/api/v1/Products`.
 
+#### Crear producto (POST)
+
+**Linux/macOS (Bash/Zsh):**
 ```bash
-# Crear producto (se guardará en BD)
-curl -X POST http://localhost:5001/api/products \
+# Crear producto (se guardará en PostgreSQL)
+curl -X POST http://localhost:5001/api/v1/Products \
   -H "Content-Type: application/json" \
   -d '{"name":"Monitor","description":"4K Monitor","price":499.99,"stock":15}' | jq
-
-# Obtener todos (desde BD)
-curl http://localhost:5001/api/products | jq
-
-# Reiniciar servicio y verificar que los datos persisten
-# Los datos deberían seguir ahí después de reiniciar
 ```
+
+**Windows (CMD):**
+```cmd
+curl -X POST http://localhost:5001/api/v1/Products -H "Content-Type: application/json" -d "{\"name\":\"Monitor\",\"description\":\"4K Monitor\",\"price\":499.99,\"stock\":15}"
+```
+
+**Windows (PowerShell):**
+```powershell
+$body = @{
+    name = "Monitor"
+    description = "4K Monitor"
+    price = 499.99
+    stock = 15
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method Post -Uri http://localhost:5001/api/v1/Products -ContentType "application/json" -Body $body | ConvertTo-Json
+```
+
+#### Obtener todos los productos (GET)
+
+**Linux/macOS (Bash/Zsh):**
+```bash
+# Obtener todos (v1 - desde PostgreSQL)
+curl http://localhost:5001/api/v1/Products | jq
+
+# Obtener todos con paginación (v2)
+curl "http://localhost:5001/api/v2/Products?page=1&pageSize=5" | jq
+```
+
+**Windows (CMD):**
+```cmd
+REM Obtener todos (v1)
+curl http://localhost:5001/api/v1/Products
+
+REM Obtener todos con paginación (v2)
+curl "http://localhost:5001/api/v2/Products?page=1&pageSize=5"
+```
+
+**Windows (PowerShell):**
+```powershell
+# Obtener todos (v1)
+Invoke-RestMethod http://localhost:5001/api/v1/Products | ConvertTo-Json
+
+# Obtener todos con paginación (v2)
+Invoke-RestMethod "http://localhost:5001/api/v2/Products?page=1&pageSize=5" | ConvertTo-Json
+```
+
+#### Verificar persistencia
+
+```bash
+# 1. Detener el servicio (Ctrl+C)
+# 2. Volver a ejecutar
+dotnet run
+
+# 3. Obtener productos - los datos seed y el Monitor creado deben seguir ahí
+curl http://localhost:5001/api/v1/Products | jq
+```
+
+**Resultado esperado:** Los datos persisten después de reiniciar el servicio porque ahora se guardan en PostgreSQL (no en memoria).
 
 ### ✅ Checklist de Verificación
 
@@ -424,16 +533,37 @@ Infrastructure/
 - Agregar al PATH si es necesario
 
 **Error: "Cannot connect to PostgreSQL"**
-- Verificar que Docker esté corriendo
-- Verificar: `docker ps`
-- Verificar connection string
+- Verificar que Docker esté corriendo: `docker ps`
+- Verificar que el contenedor esté healthy: `docker compose ps`
+- Verificar connection string en `appsettings.json`
+- Verificar que el puerto 5432 no esté ocupado por otra instancia de PostgreSQL
+
+**Error: `42P07: relation "Products" already exists`**
+- La tabla ya existe en la BD pero EF Core no tiene registro en `__EFMigrationsHistory`
+- **Solución rápida (borra datos):** Limpiar el volumen de Docker y empezar de cero:
+
+```bash
+docker compose down -v && docker compose up -d postgres
+```
+
+- **Solución sin perder datos:** Marcar la migración como aplicada manualmente:
+
+```bash
+docker exec -it microservices-postgres psql -U postgres -d microservices_db \
+  -c "INSERT INTO \"__EFMigrationsHistory\" (\"MigrationId\", \"ProductVersion\") VALUES ('20260210030522_InitialCreate', '10.0.0');"
+```
 
 **Error: "Migration already exists"**
-- Eliminar carpeta Migrations si es necesario
-- O crear nueva migración con nombre diferente
+- Eliminar carpeta `Infrastructure/Migrations` si es necesario
+- O crear nueva migración con nombre diferente: `dotnet ef migrations add NombreDiferente`
 
 **Datos no persisten**
-- Verificar que se use EfProductRepository (no InMemory)
-- Verificar logs de EF Core
-- Verificar directamente en PostgreSQL
+- Verificar que se use `EfProductRepository` (no `InMemoryProductRepository`)
+- Verificar que el DI use `AddScoped` (no `AddSingleton`) para el repositorio EF
+- Verificar logs de EF Core en la consola
+- Verificar directamente en PostgreSQL:
+
+```bash
+docker exec -it microservices-postgres psql -U postgres -d microservices_db -c 'SELECT * FROM "Products";'
+```
 
