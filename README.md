@@ -20,7 +20,7 @@ Este taller está diseñado para aprender a construir microservicios empresarial
 - ✅ **Módulo 3**: Buenas prácticas de diseño (Versionamiento, DTOs) - **COMPLETADO**
 - ✅ **Módulo 4**: Persistencia de datos (PostgreSQL, MongoDB) - **COMPLETADO**
 - ✅ **Módulo 5**: Performance y consultas (Redis, índices) - **COMPLETADO**
-- 📝 **Módulo 6**: Configuración centralizada (Azure App Configuration, Key Vault) - **DOCUMENTADO**
+- ✅ **Módulo 6**: Configuración centralizada (Options Pattern, User Secrets, Feature Flags) - **COMPLETADO**
 - 📝 **Módulo 7**: Integración (REST, gRPC, Service Bus) - **DOCUMENTADO**
 - 📝 **Módulo 8**: Seguridad (Azure AD, OAuth2) - **DOCUMENTADO**
 - 📝 **Módulo 9**: Comunicación (API Gateway, gRPC) - **DOCUMENTADO**
@@ -189,6 +189,7 @@ dotnet run
 - ✅ Redis caching implementado
 - ✅ Versionamiento de API (v1 y v2)
 - ✅ Swagger/OpenAPI configurado
+- ✅ Configuración centralizada (Options Pattern, User Secrets, Feature Flags)
 - ✅ Dockerfile para containerización
 - ✅ Documentación completa de todos los módulos
 
@@ -211,16 +212,17 @@ Cada módulo tiene su propia documentación completa con **guías paso a paso** 
 - 📖 [`MODULO-03-Versionamiento-API.md`](./docs/MODULO-03-Versionamiento-API.md) - Versionamiento y Swagger paso a paso
 - 📖 [`MODULO-04-Persistencia-Datos.md`](./docs/MODULO-04-Persistencia-Datos.md) - PostgreSQL y EF Core paso a paso
 - 📖 [`MODULO-05-Redis-Cache.md`](./docs/MODULO-05-Redis-Cache.md) - Caching distribuido paso a paso
+- 📖 [`MODULO-06-Configuracion-Centralizada.md`](./docs/MODULO-06-Configuracion-Centralizada.md) - Options Pattern, User Secrets y Feature Flags paso a paso
 
 **Módulos Documentados (con teoría y guías de implementación):**
-- 📝 `MODULO-06-16.md` - Documentación de módulos avanzados (Azure, Terraform, Istio)
+- 📝 `MODULO-07-16.md` - Documentación de módulos avanzados (Azure, Terraform, Istio)
 - 📖 [`PROYECTO-FINAL.md`](./docs/PROYECTO-FINAL.md) - Guía del proyecto integrador
 - 📖 [`GUIA-PASO-A-PASO.md`](./docs/GUIA-PASO-A-PASO.md) - Índice general y guía de uso
 
 ### 🎯 Empezar el Taller
 
 1. **Lee la [Guía Paso a Paso](./docs/GUIA-PASO-A-PASO.md)** para entender la estructura
-2. **Sigue los módulos en orden** (1 → 2 → 3 → 4 → 5)
+2. **Sigue los módulos en orden** (1 → 2 → 3 → 4 → 5 → 6)
 3. **Cada módulo incluye:**
    - 🧠 Teoría del concepto
    - 🧪 Laboratorio con pasos numerados
