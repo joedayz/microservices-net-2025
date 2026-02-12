@@ -46,6 +46,7 @@ Dockerizar microservicio y subirlo al ACR:
 
 ### Comandos
 
+**Con Docker:**
 ```bash
 # Build
 docker build -t productservice:latest .
@@ -55,6 +56,24 @@ docker tag productservice:latest myregistry.azurecr.io/productservice:latest
 
 # Push
 docker push myregistry.azurecr.io/productservice:latest
+
+# Login a ACR (si es necesario)
+az acr login --name myregistry
+```
+
+**Con Podman:**
+```bash
+# Build
+podman build -t productservice:latest .
+
+# Tag para ACR
+podman tag productservice:latest myregistry.azurecr.io/productservice:latest
+
+# Push
+podman push myregistry.azurecr.io/productservice:latest
+
+# Login a ACR (si es necesario)
+az acr login --name myregistry
 ```
 
 ### Próximos pasos

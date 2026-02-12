@@ -47,6 +47,7 @@ Integrar PostgreSQL con Entity Framework Core:
 
 ### Paso 1: Instalar herramientas de EF Core
 
+**Linux/macOS/Windows:**
 ```bash
 # Instalar dotnet-ef tool globalmente
 dotnet tool install --global dotnet-ef
@@ -57,6 +58,7 @@ dotnet ef --version
 
 ### Paso 2: Agregar paquetes NuGet
 
+**Linux/macOS/Windows:**
 ```bash
 # Desde la carpeta del proyecto ProductService
 dotnet add package Microsoft.EntityFrameworkCore
@@ -77,14 +79,30 @@ O editar `ProductService.csproj`:
 </ItemGroup>
 ```
 
-### Paso 3: Iniciar PostgreSQL con Docker
+### Paso 3: Iniciar PostgreSQL con Docker o Podman
 
+**Con Docker:**
 ```bash
 # Desde la raíz del proyecto
 docker-compose up -d postgres
 
 # Verificar que está corriendo
 docker ps
+
+# Ver logs (opcional)
+docker-compose logs postgres
+```
+
+**Con Podman:**
+```bash
+# Desde la raíz del proyecto
+podman compose up -d postgres
+
+# Verificar que está corriendo
+podman ps
+
+# Ver logs (opcional)
+podman compose logs postgres
 ```
 
 ### Paso 4: Configurar Connection String
@@ -176,6 +194,7 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<ProductDbC
 
 ### Paso 7: Crear Migración
 
+**Linux/macOS/Windows:**
 ```bash
 # Crear migración inicial
 dotnet ef migrations add InitialCreate --output-dir Infrastructure/Migrations
@@ -384,6 +403,7 @@ static async Task SeedDataAsync(IProductRepository repository)
 
 ### Paso 10: Compilar y Ejecutar
 
+**Linux/macOS/Windows:**
 ```bash
 # Compilar
 dotnet build
@@ -394,9 +414,25 @@ dotnet run
 
 ### Paso 11: Verificar Base de Datos
 
+**Con Docker:**
 ```bash
 # Conectar a PostgreSQL
 docker exec -it microservices-postgres psql -U postgres -d microservices_db
+
+# Ver tablas
+\dt
+
+# Ver productos
+SELECT * FROM "Products";
+
+# Salir
+\q
+```
+
+**Con Podman:**
+```bash
+# Conectar a PostgreSQL
+podman exec -it microservices-postgres psql -U postgres -d microservices_db
 
 # Ver tablas
 \dt
@@ -533,24 +569,38 @@ Infrastructure/
 - Agregar al PATH si es necesario
 
 **Error: "Cannot connect to PostgreSQL"**
-- Verificar que Docker esté corriendo: `docker ps`
-- Verificar que el contenedor esté healthy: `docker compose ps`
+- Verificar que el contenedor esté corriendo: `docker ps` o `podman ps`
+- Verificar que el contenedor esté healthy: `docker compose ps` o `podman compose ps`
 - Verificar connection string en `appsettings.json`
 - Verificar que el puerto 5432 no esté ocupado por otra instancia de PostgreSQL
 
 **Error: `42P07: relation "Products" already exists`**
 - La tabla ya existe en la BD pero EF Core no tiene registro en `__EFMigrationsHistory`
-- **Solución rápida (borra datos):** Limpiar el volumen de Docker y empezar de cero:
+- **Solución rápida (borra datos):** Limpiar el volumen y empezar de cero:
 
+**Con Docker:**
 ```bash
 docker compose down -v && docker compose up -d postgres
 ```
 
+**Con Podman:**
+```bash
+podman compose down -v && podman compose up -d postgres
+```
+
 - **Solución sin perder datos:** Marcar la migración como aplicada manualmente:
 
+**Con Docker:**
 ```bash
 docker exec -it microservices-postgres psql -U postgres -d microservices_db \
   -c "INSERT INTO \"__EFMigrationsHistory\" (\"MigrationId\", \"ProductVersion\") VALUES ('20260210030522_InitialCreate', '10.0.0');"
+```
+
+**Con Podman:**
+```bash
+podman exec -it microservices-postgres psql -U postgres -d microservices_db \
+  -c "INSERT INTO \"__EFMigrationsHistory\" (\"MigrationId\", \"ProductVersion\") VALUES ('20260210030522_InitialCreate', '10.0.0');"
+```
 ```
 
 **Error: "Migration already exists"**
@@ -563,7 +613,13 @@ docker exec -it microservices-postgres psql -U postgres -d microservices_db \
 - Verificar logs de EF Core en la consola
 - Verificar directamente en PostgreSQL:
 
+**Con Docker:**
 ```bash
 docker exec -it microservices-postgres psql -U postgres -d microservices_db -c 'SELECT * FROM "Products";'
+```
+
+**Con Podman:**
+```bash
+podman exec -it microservices-postgres psql -U postgres -d microservices_db -c 'SELECT * FROM "Products";'
 ```
 

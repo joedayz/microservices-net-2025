@@ -53,8 +53,9 @@ Añadir Redis caching a operaciones GET:
 - Cache de lista de productos
 - Invalidación automática en escrituras
 
-### Paso 1: Iniciar Redis con Docker
+### Paso 1: Iniciar Redis con Docker o Podman
 
+**Con Docker:**
 ```bash
 # Desde la raíz del proyecto
 docker-compose up -d redis
@@ -67,8 +68,22 @@ docker exec -it microservices-redis redis-cli ping
 # Debe responder: PONG
 ```
 
+**Con Podman:**
+```bash
+# Desde la raíz del proyecto
+podman compose up -d redis
+
+# Verificar que está corriendo
+podman ps
+
+# Probar conexión (opcional)
+podman exec -it microservices-redis redis-cli ping
+# Debe responder: PONG
+```
+
 ### Paso 2: Agregar Paquete NuGet
 
+**Linux/macOS/Windows:**
 ```bash
 # Desde la carpeta ProductService
 dotnet add package Microsoft.Extensions.Caching.StackExchangeRedis
@@ -464,6 +479,7 @@ dotnet run
 
 **⚠️ Importante:** Verifica el puerto en `Properties/launchSettings.json`. Por defecto es `5001`.
 
+**Linux/macOS (Bash/Zsh):**
 ```bash
 # Primera llamada (cache miss - va a BD)
 curl http://localhost:5001/api/products | jq
@@ -472,18 +488,40 @@ curl http://localhost:5001/api/products | jq
 # Segunda llamada (cache hit - desde Redis)
 curl http://localhost:5001/api/products | jq
 # Observar logs: "Cache hit for all products"
+```
 
-# Verificar en Redis (opcional)
-# Con Docker:
+**Windows (PowerShell):**
+```powershell
+# Primera llamada (cache miss - va a BD)
+Invoke-RestMethod http://localhost:5001/api/products | ConvertTo-Json
+# Observar logs: "Cache miss for all products"
+
+# Segunda llamada (cache hit - desde Redis)
+Invoke-RestMethod http://localhost:5001/api/products | ConvertTo-Json
+# Observar logs: "Cache hit for all products"
+```
+
+**Verificar en Redis (opcional):**
+
+**Con Docker:**
+```bash
 docker exec -it microservices-redis redis-cli
-# Con Podman:
+KEYS *
+GET products:all
+exit
+```
+
+**Con Podman:**
+```bash
 podman exec -it microservices-redis redis-cli
 KEYS *
 GET products:all
+exit
 ```
 
 ### Paso 11: Verificar Invalidación
 
+**Linux/macOS (Bash/Zsh):**
 ```bash
 # Crear producto nuevo
 curl -X POST http://localhost:5001/api/products \
@@ -494,9 +532,25 @@ curl -X POST http://localhost:5001/api/products \
 curl http://localhost:5001/api/products | jq
 ```
 
+**Windows (PowerShell):**
+```powershell
+# Crear producto nuevo
+$body = @{
+    name = "Tablet"
+    description = "Android tablet"
+    price = 299.99
+    stock = 20
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method Post -Uri http://localhost:5001/api/products -ContentType "application/json" -Body $body | ConvertTo-Json
+
+# Obtener todos (debe invalidar cache y refrescar)
+Invoke-RestMethod http://localhost:5001/api/products | ConvertTo-Json
+```
+
 ### ✅ Checklist de Verificación
 
-- [ ] Redis corriendo en Docker
+- [ ] Redis corriendo en Docker o Podman
 - [ ] Paquete StackExchangeRedis instalado
 - [ ] Connection string configurado
 - [ ] Interfaz IProductCache creada
@@ -534,17 +588,25 @@ curl http://localhost:5001/api/products | jq
 ### 🐛 Solución de Problemas
 
 **Error: "Cannot connect to Redis"**
-- Verificar que Redis esté corriendo: `docker ps`
-- Verificar connection string
+- Verificar que Redis esté corriendo: `docker ps` o `podman ps`
+- Verificar connection string en `appsettings.json`
 - Verificar puerto (6379)
+- Probar conexión: `docker exec -it microservices-redis redis-cli ping` (o `podman exec...`)
 
 **Cache no funciona**
-- Verificar logs de hit/miss
-- Verificar que IProductCache esté registrado
+- Verificar logs de hit/miss en la consola
+- Verificar que IProductCache esté registrado en Program.cs
 - Verificar serialización JSON
+- Asegurarse de que Redis esté corriendo correctamente
 
 **Datos desactualizados**
-- Verificar invalidación en escrituras
+- Verificar invalidación en escrituras (Create/Update/Delete)
 - Reducir tiempo de expiración para testing
-- Limpiar cache manualmente si es necesario
+- Limpiar cache manualmente si es necesario:
+  ```bash
+  # Con Docker:
+  docker exec -it microservices-redis redis-cli FLUSHALL
+  # Con Podman:
+  podman exec -it microservices-redis redis-cli FLUSHALL
+  ```
 

@@ -729,9 +729,9 @@ $env:FeatureFlags__EnableSearchByName = "true"
 dotnet run
 ```
 
-**Esto es clave para Docker y Kubernetes:**
+**Esto es clave para contenedores (Docker/Podman) y Kubernetes:**
 ```yaml
-# docker-compose.yml o Kubernetes manifest
+# docker-compose.yml o podman-compose.yml o Kubernetes manifest
 environment:
   - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;...
   - Cache__Enabled=true

@@ -72,6 +72,7 @@ Instalar Istio en AKS + activar observabilidad:
 
 ### Comandos
 
+**Linux/macOS/Windows (con kubectl instalado):**
 ```bash
 # Instalar Istio
 istioctl install --set values.defaultRevision=default
@@ -87,6 +88,8 @@ spec:
     mode: STRICT
 EOF
 ```
+
+**Nota:** Los comandos de `istioctl` y `kubectl` funcionan de manera idéntica en Linux, macOS y Windows. Asegúrate de tener instaladas ambas herramientas en tu sistema.
 
 ### Próximos pasos
 
