@@ -482,23 +482,23 @@ dotnet run
 **Linux/macOS (Bash/Zsh):**
 ```bash
 # Primera llamada (cache miss - va a BD)
-curl http://localhost:5001/api/products | jq
-# Observar logs: "Cache miss for all products"
+curl http://localhost:5001/api/v1/Products | jq
+# Observar logs: "Cache MISS for all products"
 
 # Segunda llamada (cache hit - desde Redis)
-curl http://localhost:5001/api/products | jq
-# Observar logs: "Cache hit for all products"
+curl http://localhost:5001/api/v1/Products | jq
+# Observar logs: "Cache HIT for all products"
 ```
 
 **Windows (PowerShell):**
 ```powershell
 # Primera llamada (cache miss - va a BD)
-Invoke-RestMethod http://localhost:5001/api/products | ConvertTo-Json
-# Observar logs: "Cache miss for all products"
+Invoke-RestMethod http://localhost:5001/api/v1/Products | ConvertTo-Json
+# Observar logs: "Cache MISS for all products"
 
 # Segunda llamada (cache hit - desde Redis)
-Invoke-RestMethod http://localhost:5001/api/products | ConvertTo-Json
-# Observar logs: "Cache hit for all products"
+Invoke-RestMethod http://localhost:5001/api/v1/Products | ConvertTo-Json
+# Observar logs: "Cache HIT for all products"
 ```
 
 **Verificar en Redis (opcional):**
@@ -524,12 +524,17 @@ exit
 **Linux/macOS (Bash/Zsh):**
 ```bash
 # Crear producto nuevo
-curl -X POST http://localhost:5001/api/products \
+curl -X POST http://localhost:5001/api/v1/Products \
   -H "Content-Type: application/json" \
   -d '{"name":"Tablet","description":"Android tablet","price":299.99,"stock":20}' | jq
 
 # Obtener todos (debe invalidar cache y refrescar)
-curl http://localhost:5001/api/products | jq
+curl http://localhost:5001/api/v1/Products | jq
+```
+
+**Windows (CMD):**
+```cmd
+curl -X POST http://localhost:5001/api/v1/Products -H "Content-Type: application/json" -d "{\"name\":\"Tablet\",\"description\":\"Android tablet\",\"price\":299.99,\"stock\":20}"
 ```
 
 **Windows (PowerShell):**
@@ -542,10 +547,10 @@ $body = @{
     stock = 20
 } | ConvertTo-Json
 
-Invoke-RestMethod -Method Post -Uri http://localhost:5001/api/products -ContentType "application/json" -Body $body | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri http://localhost:5001/api/v1/Products -ContentType "application/json" -Body $body | ConvertTo-Json
 
 # Obtener todos (debe invalidar cache y refrescar)
-Invoke-RestMethod http://localhost:5001/api/products | ConvertTo-Json
+Invoke-RestMethod http://localhost:5001/api/v1/Products | ConvertTo-Json
 ```
 
 ### ✅ Checklist de Verificación

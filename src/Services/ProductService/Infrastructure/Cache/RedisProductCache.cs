@@ -27,11 +27,11 @@ public class RedisProductCache: IProductCache
 
         if (string.IsNullOrEmpty(cached))
         {
-            _logger.LogDebug("Cache miss for product {ProductId}", id);
+            _logger.LogInformation("Cache MISS for product {ProductId}", id);
             return null;
         }
 
-        _logger.LogDebug("Cache hit for product {ProductId}", id);
+        _logger.LogInformation("Cache HIT for product {ProductId}", id);
         return JsonSerializer.Deserialize<ProductDto>(cached, JsonOptions);
     }
 
@@ -41,11 +41,11 @@ public class RedisProductCache: IProductCache
 
         if (string.IsNullOrEmpty(cached))
         {
-            _logger.LogDebug("Cache miss for all products");
+            _logger.LogInformation("Cache MISS for all products");
             return null;
         }
 
-        _logger.LogDebug("Cache hit for all products");
+        _logger.LogInformation("Cache HIT for all products");
         return JsonSerializer.Deserialize<IEnumerable<ProductDto>>(cached, JsonOptions);
     }
 
@@ -61,7 +61,7 @@ public class RedisProductCache: IProductCache
         };
 
         await _cache.SetStringAsync(key, json, options, cancellationToken);
-        _logger.LogDebug("Cached product {ProductId}", id);
+        _logger.LogInformation("Cached product {ProductId}", id);
 
         // Invalidar cache de todos los productos
         await RemoveAllAsync(cancellationToken);
@@ -78,14 +78,14 @@ public class RedisProductCache: IProductCache
         };
 
         await _cache.SetStringAsync(AllProductsKey, json, options, cancellationToken);
-        _logger.LogDebug("Cached all products");
+        _logger.LogInformation("Cached all products");
     }
 
     public async Task RemoveAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var key = $"products:{id}";
         await _cache.RemoveAsync(key, cancellationToken);
-        _logger.LogDebug("Removed cache for product {ProductId}", id);
+        _logger.LogInformation("Removed cache for product {ProductId}", id);
 
         // Invalidar cache de todos los productos
         await RemoveAllAsync(cancellationToken);
@@ -94,6 +94,6 @@ public class RedisProductCache: IProductCache
     public async Task RemoveAllAsync(CancellationToken cancellationToken = default)
     {
         await _cache.RemoveAsync(AllProductsKey, cancellationToken);
-        _logger.LogDebug("Removed cache for all products");
+        _logger.LogInformation("Removed cache for all products");
     }
 }
