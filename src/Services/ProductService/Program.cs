@@ -6,6 +6,7 @@ using ProductService;
 using ProductService.Application.Services;
 using ProductService.Domain;
 using ProductService.Infrastructure;
+using ProductService.Infrastructure.Cache;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,25 @@ builder.Services.AddControllers();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ProductDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+
+// Register Redis Cache
+var redisConnection = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrEmpty(redisConnection))
+{
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = redisConnection;
+    });
+    builder.Services.AddScoped<IProductCache, RedisProductCache>();
+}
+else
+{
+    // Fallback a cache en memoria si Redis no está disponible
+    builder.Services.AddMemoryCache();
+    builder.Services.AddScoped<IProductCache, InMemoryProductCache>();
+}
+
 
 // API Versioning
 builder.Services
