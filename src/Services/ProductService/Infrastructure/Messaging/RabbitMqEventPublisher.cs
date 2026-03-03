@@ -7,12 +7,12 @@ using RabbitMQ.Client;
 
 namespace ProductService.Infrastructure.Messaging;
 
-public class RabbitMqEventPublisher : IEventPublisher
+public class RabbitMqEventPublisher : IEventPublisher, IAsyncDisposable
 {
-    private readonly IConnection _connection;
-    private readonly IModel _channel;
     private readonly RabbitMqOptions _options;
     private readonly ILogger<RabbitMqEventPublisher> _logger;
+    private IConnection? _connection;
+    private IChannel? _channel;
 
     public RabbitMqEventPublisher(
         IOptions<RabbitMqOptions> options,
@@ -20,37 +20,51 @@ public class RabbitMqEventPublisher : IEventPublisher
     {
         _options = options.Value;
         _logger = logger;
-        var factory = new ConnectionFactory
-        {
-            Uri = new Uri(_options.ConnectionString)
-        };
-        _connection = factory.CreateConnection();
-        _channel = _connection.CreateModel();
-        _channel.ExchangeDeclare(_options.Exchange, _options.ExchangeType, durable: true, autoDelete: false);
     }
 
-    public Task PublishAsync<T>(T domainEvent, CancellationToken cancellationToken = default)
+    private async Task EnsureInitializedAsync(CancellationToken cancellationToken = default)
+    {
+        if (_channel != null) return;
+        var factory = new ConnectionFactory { Uri = new Uri(_options.ConnectionString) };
+        _connection = await factory.CreateConnectionAsync(cancellationToken);
+        _channel = await _connection.CreateChannelAsync(cancellationToken: cancellationToken);
+        await _channel.ExchangeDeclareAsync(
+            _options.Exchange, _options.ExchangeType,
+            durable: true, autoDelete: false,
+            cancellationToken: cancellationToken);
+    }
+
+    public async Task PublishAsync<T>(T domainEvent, CancellationToken cancellationToken = default)
         where T : DomainEvent
     {
+        await EnsureInitializedAsync(cancellationToken);
+
         var json = JsonSerializer.Serialize(domainEvent);
         var body = Encoding.UTF8.GetBytes(json);
-        var properties = _channel.CreateBasicProperties();
-        properties.Persistent = true;
-        properties.ContentType = "application/json";
-        properties.Type = domainEvent.EventType;
+        var properties = new BasicProperties
+        {
+            DeliveryMode = DeliveryModes.Persistent,
+            ContentType = "application/json",
+            Type = domainEvent.EventType
+        };
 
-        _channel.BasicPublish(
+        await _channel!.BasicPublishAsync(
             exchange: _options.Exchange,
             routingKey: domainEvent.EventType,
             mandatory: false,
             basicProperties: properties,
-            body: body);
+            body: body,
+            cancellationToken: cancellationToken);
 
         _logger.LogInformation(
             "Published event {EventType} ({EventId}) to RabbitMQ",
             domainEvent.EventType,
             domainEvent.EventId);
+    }
 
-        return Task.CompletedTask;
+    public async ValueTask DisposeAsync()
+    {
+        if (_channel != null) { await _channel.CloseAsync(); _channel.Dispose(); }
+        if (_connection != null) { await _connection.CloseAsync(); _connection.Dispose(); }
     }
 }

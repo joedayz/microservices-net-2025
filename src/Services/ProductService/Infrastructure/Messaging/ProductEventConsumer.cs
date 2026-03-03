@@ -14,7 +14,7 @@ public class ProductEventConsumer : BackgroundService
     private readonly RabbitMqOptions _options;
     private readonly ILogger<ProductEventConsumer> _logger;
     private IConnection? _connection;
-    private IModel? _channel;
+    private IChannel? _channel;
 
     public ProductEventConsumer(
         IOptions<RabbitMqOptions> options,
@@ -29,21 +29,23 @@ public class ProductEventConsumer : BackgroundService
         try
         {
             var factory = new ConnectionFactory { Uri = new Uri(_options.ConnectionString) };
-            _connection = factory.CreateConnection();
-            _channel = _connection.CreateModel();
-            _channel.ExchangeDeclare(_options.Exchange, _options.ExchangeType, durable: true, autoDelete: false);
-            var queueName = _channel.QueueDeclare("product-events-productservice", durable: true, exclusive: false, autoDelete: false).QueueName;
-            _channel.QueueBind(queueName, _options.Exchange, "product.*");
+            _connection = await factory.CreateConnectionAsync(stoppingToken);
+            _channel = await _connection.CreateChannelAsync(cancellationToken: stoppingToken);
+            await _channel.ExchangeDeclareAsync(_options.Exchange, _options.ExchangeType, durable: true, autoDelete: false, cancellationToken: stoppingToken);
 
-            var consumer = new EventingBasicConsumer(_channel);
-            consumer.Received += (_, ea) =>
+            var queueDeclareOk = await _channel.QueueDeclareAsync(
+                "product-events-productservice", durable: true, exclusive: false, autoDelete: false, cancellationToken: stoppingToken);
+            await _channel.QueueBindAsync(queueDeclareOk.QueueName, _options.Exchange, "product.*", cancellationToken: stoppingToken);
+
+            var consumer = new AsyncEventingBasicConsumer(_channel);
+            consumer.ReceivedAsync += async (_, ea) =>
             {
                 var body = ea.Body.ToArray();
                 var json = Encoding.UTF8.GetString(body);
                 _logger.LogInformation("[ProductEventConsumer] Received event {RoutingKey}: {Payload}", ea.RoutingKey, json);
-                _channel!.BasicAck(ea.DeliveryTag, false);
+                await _channel.BasicAckAsync(ea.DeliveryTag, false, stoppingToken);
             };
-            _channel.BasicConsume(queueName, autoAck: false, consumer);
+            await _channel.BasicConsumeAsync(queueDeclareOk.QueueName, autoAck: false, consumer, stoppingToken);
 
             await Task.Delay(Timeout.Infinite, stoppingToken);
         }
@@ -55,8 +57,8 @@ public class ProductEventConsumer : BackgroundService
 
     public override void Dispose()
     {
-        _channel?.Close();
-        _connection?.Close();
+        _channel?.Dispose();
+        _connection?.Dispose();
         base.Dispose();
     }
 }
