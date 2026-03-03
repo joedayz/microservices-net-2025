@@ -1,7 +1,11 @@
+using System.Text;
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
 using Azure.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using ProductService;
 using ProductService.Application.Configuration;
 using ProductService.Application.Services;
@@ -71,9 +75,64 @@ builder.Services
         options.SubstituteApiVersionInUrl = true;
     });
 
+// ============================
+// JWT Authentication
+// ============================
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var secretKey = jwtSettings["Key"] ?? "S3cur3K3y_F0r_D3v3l0pm3nt_Purp0s3s_Only_2025!";
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"] ?? "microservices-net-2025",
+        ValidAudience = jwtSettings["Audience"] ?? "microservices-api",
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("ReadOnly", policy => policy.RequireRole("Admin", "Reader"));
+});
+
 // Swagger / OpenAPI (versioned)
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    // Configurar JWT en Swagger UI
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Ingrese el token JWT. Ejemplo: eyJhbGciOi..."
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Name = "Bearer"
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
 
 // RabbitMQ options (ConnectionString from ConnectionStrings:RabbitMq)
@@ -169,6 +228,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapGrpcService<ProductGrpcService>();

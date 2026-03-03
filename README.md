@@ -21,7 +21,7 @@ Este taller está diseñado para aprender a construir microservicios empresarial
 - ✅ **Módulo 4**: Persistencia de datos (PostgreSQL, MongoDB) - **COMPLETADO**
 - ✅ **Módulo 5**: Performance y consultas (Redis, índices) - **COMPLETADO**
 - ✅ **Módulo 6**: Configuración centralizada (Options Pattern, User Secrets, Feature Flags) - **COMPLETADO**
-- 📝 **Módulo 7**: Integración (REST, gRPC, Service Bus) - **DOCUMENTADO**
+- ✅ **Módulo 7**: Integración (REST, gRPC, Service Bus) - **COMPLETADO**
 - 📝 **Módulo 8**: Seguridad (Azure AD, OAuth2) - **DOCUMENTADO**
 - 📝 **Módulo 9**: Comunicación (API Gateway, gRPC) - **DOCUMENTADO**
 - 📝 **Módulo 10**: Serverless (Azure Functions) - **DOCUMENTADO**
