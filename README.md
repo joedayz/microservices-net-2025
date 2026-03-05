@@ -24,7 +24,7 @@ Este taller está diseñado para aprender a construir microservicios empresarial
 - ✅ **Módulo 7**: Integración (REST, gRPC, Service Bus) - **COMPLETADO**
 - 📝 **Módulo 8**: Seguridad (Azure AD, OAuth2) - **DOCUMENTADO**
 - ✅ **Módulo 9**: Comunicación (API Gateway, gRPC) - **COMPLETADO**
-- 📝 **Módulo 10**: Serverless (Azure Functions) - **DOCUMENTADO**
+- ✅ **Módulo 10**: Serverless (Azure Functions, Service Bus trigger) - **COMPLETADO**
 - 📝 **Módulo 11**: Alta disponibilidad (Polly, Circuit Breaker) - **DOCUMENTADO**
 - 📝 **Módulo 12**: Balanceo de carga (AKS) - **DOCUMENTADO**
 - 📝 **Módulo 13**: Azure Cloud (ACR, AKS) - **DOCUMENTADO**

@@ -53,10 +53,10 @@ Esta guía proporciona instrucciones detalladas paso a paso para cada módulo de
    - Routing a ProductService y OrderService
    - Laboratorio paso a paso
 
-10. **[Módulo 10: Serverless](./MODULO-10-Serverless.md)** 📝
-    - Azure Functions
-    - Event triggers
-    - Durable Functions
+10. **[Módulo 10: Serverless](./MODULO-10-Serverless.md)** ✅
+    - Azure Functions (isolated worker, .NET 8)
+    - Service Bus trigger (topic product-events)
+    - Laboratorio paso a paso + ngrok + comandos APIM actualizados
 
 11. **[Módulo 11: Resiliencia](./MODULO-11-Resiliencia.md)** 📝
     - Polly
