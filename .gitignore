@@ -98,3 +98,6 @@ Thumbs.db
 secrets.json
 appsettings.Development.json
 !appsettings.Development.json.example
+
+# Azure Functions (contiene connection strings locales)
+**/local.settings.json
