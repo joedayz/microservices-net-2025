@@ -48,10 +48,10 @@ Esta guía proporciona instrucciones detalladas paso a paso para cada módulo de
    - JWT Authentication
    - OAuth2/OIDC
 
-9. **[Módulo 9: API Gateway](./MODULO-09-API-Gateway.md)** 📝
-   - YARP u Ocelot
-   - Routing
-   - Load balancing
+9. **[Módulo 9: API Gateway](./MODULO-09-API-Gateway.md)** ✅
+   - YARP (reverse proxy)
+   - Routing a ProductService y OrderService
+   - Laboratorio paso a paso
 
 10. **[Módulo 10: Serverless](./MODULO-10-Serverless.md)** 📝
     - Azure Functions

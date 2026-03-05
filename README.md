@@ -23,7 +23,7 @@ Este taller está diseñado para aprender a construir microservicios empresarial
 - ✅ **Módulo 6**: Configuración centralizada (Options Pattern, User Secrets, Feature Flags) - **COMPLETADO**
 - ✅ **Módulo 7**: Integración (REST, gRPC, Service Bus) - **COMPLETADO**
 - 📝 **Módulo 8**: Seguridad (Azure AD, OAuth2) - **DOCUMENTADO**
-- 📝 **Módulo 9**: Comunicación (API Gateway, gRPC) - **DOCUMENTADO**
+- ✅ **Módulo 9**: Comunicación (API Gateway, gRPC) - **COMPLETADO**
 - 📝 **Módulo 10**: Serverless (Azure Functions) - **DOCUMENTADO**
 - 📝 **Módulo 11**: Alta disponibilidad (Polly, Circuit Breaker) - **DOCUMENTADO**
 - 📝 **Módulo 12**: Balanceo de carga (AKS) - **DOCUMENTADO**
@@ -192,10 +192,10 @@ dotnet run
 - ✅ Configuración centralizada (Options Pattern, User Secrets, Feature Flags)
 - ✅ Dockerfile para containerización
 - ✅ Documentación completa de todos los módulos
+- ✅ API Gateway (YARP) con routing a ProductService y OrderService
 
 **En progreso:**
-- ⏳ OrderService y UserService
-- ⏳ API Gateway (YARP)
+- ⏳ UserService
 - ⏳ Azure Service Bus integration
 - ⏳ Terraform scripts
 - ⏳ CI/CD pipelines
@@ -213,9 +213,12 @@ Cada módulo tiene su propia documentación completa con **guías paso a paso** 
 - 📖 [`MODULO-04-Persistencia-Datos.md`](./docs/MODULO-04-Persistencia-Datos.md) - PostgreSQL y EF Core paso a paso
 - 📖 [`MODULO-05-Redis-Cache.md`](./docs/MODULO-05-Redis-Cache.md) - Caching distribuido paso a paso
 - 📖 [`MODULO-06-Configuracion-Centralizada.md`](./docs/MODULO-06-Configuracion-Centralizada.md) - Options Pattern, User Secrets y Feature Flags paso a paso
+- 📖 [`MODULO-07-Integracion.md`](./docs/MODULO-07-Integracion.md) - REST, gRPC, RabbitMQ, OrderService paso a paso
+- 📖 [`MODULO-08-Seguridad.md`](./docs/MODULO-08-Seguridad.md) - Azure AD, JWT Bearer paso a paso
+- 📖 [`MODULO-09-API-Gateway.md`](./docs/MODULO-09-API-Gateway.md) - API Gateway con YARP paso a paso
 
 **Módulos Documentados (con teoría y guías de implementación):**
-- 📝 `MODULO-07-16.md` - Documentación de módulos avanzados (Azure, Terraform, Istio)
+- 📝 Módulos 10-16 - Documentación de módulos avanzados (Azure, Terraform, Istio)
 - 📖 [`PROYECTO-FINAL.md`](./docs/PROYECTO-FINAL.md) - Guía del proyecto integrador
 - 📖 [`GUIA-PASO-A-PASO.md`](./docs/GUIA-PASO-A-PASO.md) - Índice general y guía de uso
 
